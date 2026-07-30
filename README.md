@@ -1,8 +1,8 @@
 # Overview
 
-Practice makes perfect. This time, I'll use Python and SQLite3 to simulate human resource management within a company. The database schema will likely change depending on the growth needs of a real business.
+Repetition is the mother of skill. This time, I'll use Python and SQLite3 to simulate human resource management within a company. The database schema will likely change depending on the growth needs of a real business.
 
-I'll start by managing employees and departments. Later, you can add projects and job titles or positions (with their respective salary ranges).
+I'll start by managing employees and departments. Later, I will add projects and job titles or positions (with their respective salary ranges).
 
 
 [Software Demo Video]()
