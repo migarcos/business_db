@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import date
 
 def get_conn():
     conn = sqlite3.connect("business.db")
@@ -28,7 +29,7 @@ def init_db():
             ("Angeline", "Jolie", "ajolie@buss.com", "2024-02-01", 2000.00, "SAL"),
             ("Sandra", "Bullock", "sbullock@buss.com", "2025-09-15", 2000.00, "SAL"),
             ("Kevin", "Space", "kspace@buss.com", "2023-11-15", 3500.00, "OPS"),
-            ("Darth", "Vader", "dvader@buss.com", "2026-01-02", 3500.00, "OPS")
+            ("Darth", "Vader", "dvader@buss.com", "2026-01-02", 3500.00, "OPS"),
         ]
 
         cursor.execute("""
@@ -58,10 +59,12 @@ def init_db():
             )
         """)
 
-        cursor.executemany("""
-            INSERT OR IGNORE INTO employee (fname, lname, email, hire_date, salary, department_id)
-            VALUES (?, ?, ?, ?, ?, (SELECT department_id FROM departments WHERE department_code = ?) )
-        """, init_empl)
+        cursor.execute("SELECT COUNT(*) FROM employee")
+        if cursor.fetchone()[0] == 0:
+            cursor.executemany("""
+                INSERT INTO employee (fname, lname, email, hire_date, salary, department_id)
+                VALUES (?, ?, ?, ?, ?, (SELECT department_id FROM departments WHERE department_code = ?) )
+            """, init_empl,)
 
         conn.commit()
 
@@ -76,7 +79,7 @@ def show_departments():
             print(f'ID: {row['department_id']} | Código: {row['department_code']} | Nombre: {row['department_name']}')
         print("\n")
 
-def show_init_empl():
+def show_all_empl():
     with get_conn() as conn:
             cursor = conn.cursor()
             # cursor.execute("SELECT * FROM employee")
@@ -94,11 +97,115 @@ def show_init_empl():
             for row in rows:
                 print(f'{row['fname']:<10} {row['lname']:<12} {row['email']:<28} {row['hire_date']:<12} {row['salary']:>10.2f} {row['department_code']:>6}')
 
+#  - - - -  CRUD  - - - -  
+def create_emp(data):
+    with get_conn() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO employee (fname, lname, email, hire_date, salary, department_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                data["fname"], data["lname"], data["email"], data["hire_date"], data["salary"], data["department_id"]
+            ),
+        )
+        conn.commit()
+        print("\n A new employee was created successfully!")
+
 # --- CLI handlers ---
+def emp_creation():
+    
+    fields = [
+        ("fname", "First Name"),
+        ("lname", "Last Name"),
+        ("email", "Email Address"),
+        ("salary", "Salary"),
+    ]
+
+    employee_data = {}
+
+    print("\n---- Create a new employee ----")
+    print("* This fields are required:")
+
+    for field_key, field_label in fields:
+        while True:
+            value = input(f'{field_label}: ').strip()
+
+            if not value:
+                print(f' ERROR! {field_label} cannot be blank. Write a valid value.')
+                continue
+
+            if field_key == "salary":
+                try:
+                    value = float(value)
+                    if value < 800:
+                        print(' ERROR! Salary must be greater than 799. Try again')
+                        continue
+                except ValueError:
+                    print('ERROR! Invalid number format for Salary. Try again')
+                    continue
+
+            employee_data[field_key] = value
+            break
+
+    hire_date_str = date.today().isoformat()
+    employee_data["hire_date"] = hire_date_str
+    print('Hire Date use, as default value, the actual date.')
+
+    with get_conn() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT department_id, department_code, department_name FROM departments")
+        departments = cursor.fetchall()
+
+        print('\nAvailable departments: ')
+        for dept in departments:
+            print(f"[{dept['department_code']:<4}] - [{dept['department_name']}] ")
+
+        while True:
+            dept_code = (
+                input('\nEnter a valid department Code: ').strip().upper()
+            )
+
+            cursor.execute('SELECT department_id FROM departments WHERE department_code = ?',
+                        (dept_code,),
+            )
+            dept_result = cursor.fetchone()
+
+            if dept_result:
+                employee_data['department_id'] = dept_result['department_id']
+                break
+            else:
+                print('ERROR! Invalid department code. Choose from the list above')
+
+    create_emp(employee_data)
+
+
 def main():
     init_db()
-    show_departments()
-    show_init_empl()
+    # show_departments()     show_init_empl()
+    try: 
+        while True:
+            print("\n ===   MAIN MENU   === ")
+            print("1. Add Employee")
+            print("2. List All Employee")
+            print("3. Find Employee by Name")
+            print("4. Update Employee")
+            print("1. Delete Employee")
+            print("1. Add Employee")
+            usr_opt = input("\nSelect an option: ").strip()
+
+            match usr_opt:
+                case "1": 
+                    emp_creation()
+                case "2":
+                    show_all_empl()
+                case "6": 
+                    print("\nExiting application. Goodbye!")
+                    break
+                case _:
+                    print("\nInvalid choice. Please select from the list")
+
+    except (KeyboardInterrupt, EOFError):
+        print("\nGame Over, Try afain")
 
 if __name__ == "__main__":
     main()
