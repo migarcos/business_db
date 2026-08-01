@@ -113,6 +113,14 @@ def create_emp(data):
         conn.commit()
         print("\n A new employee was created successfully!")
 
+def del_emp(id):
+    with get_conn() as conn:
+        cursor = conn.cursor()
+        # cursor.execute("SELECT * FROM employee")
+        cursor.execute("DELETE FROM employee WHERE employee_id = ?", [id] )
+        conn.commit()
+        return cursor.rowcount > 0
+    
 # --- CLI handlers ---
 def emp_creation():
     
@@ -181,7 +189,15 @@ def emp_creation():
     create_emp(employee_data)
 
 def emp_del():
-    print("starting")
+    print("\n ----  Delete Employee ----- ")
+    try:
+        emp_id = int( input("Enter employee ID: ") )
+        if del_emp(emp_id):
+            print(f"Employee with ID {emp_id} deleted sucesfully.")
+        else:
+            print(f"Employee with ID {emp_id} Not Found.")
+    except ValueError:
+        print("A valid employee ID is required.")
 
 def main():
     init_db()
