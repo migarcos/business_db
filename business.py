@@ -99,6 +99,60 @@ def show_all_empl():
                 # print(f"{emp_id:<5} {row['fname']:<10} {row['lname']:<12} {row['email']:<20} {row['hire_date']:<12} {row['salary']:>10.2f} {row['department_code']:>6}")
                 print(f"{row['employee_id']:<5} {row['fname']:<10} {row['lname']:<12} {row['email']:<20} {row['hire_date']:<12} {row['salary']:>10.2f} {row['department_code']:>6}")
 
+def emp_by_dep():
+    with get_conn() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT d.department_code, COUNT(e.employee_id) AS employee_count
+            FROM employee e
+            JOIN departments d ON e.department_id = d.department_id
+            GROUP BY d.department_code
+            ORDER BY d.department_code
+        """)
+
+        rows = cursor.fetchall()
+
+        print("\n ==== Employees by Department ==== ")
+        print(f"\n{'Dept':<6} {'Count':>6} ") 
+        print("-" * 20)
+
+        total = 0
+        for row in rows:
+            dept = row['department_code']
+            count = row['employee_count']
+            total += count
+            print(f"{dept:<6} {count:>6}")
+
+        print("-" * 20)
+        print(f'{'TOTAL':<6} {total:>6}')
+
+def salary_by_dep():
+    with get_conn() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT d.department_code, SUM(e.salary) AS subt_salary
+            FROM employee e
+            JOIN departments d ON e.department_id = d.department_id
+            GROUP BY d.department_code
+            ORDER BY d.department_code
+        """)
+
+        rows = cursor.fetchall()
+
+        print("\n ==== Salary by Department ==== ")
+        print(f"\n{'Dept':<6} {'subtotal':>12} ") 
+        print("-" * 20)
+
+        total = 0
+        for row in rows:
+            dept = row['department_code']
+            subtotal = row['subt_salary']
+            total += subtotal
+            print(f"{dept:<6} {total:>12.2f}")
+
+        print("-" * 20)
+        print(f'{'TOTAL':<6} {total:>12.2f}')
+
 #  - - - -  CRUD  - - - -  
 def create_emp(data):
     with get_conn() as conn:
@@ -258,6 +312,8 @@ def main():
             print("3. Find Employee by Name")
             print("4. Update Employee")
             print("5. Delete Employee")
+            print("6. Employees by department")
+            print("7. Salary by department")
             print("0. Exit ")
             usr_opt = input("\nSelect an option: ").strip()
 
@@ -270,6 +326,10 @@ def main():
                     emp_upd()
                 case "5":
                     emp_del()
+                case "6":
+                    emp_by_dep()
+                case "7":
+                    salary_by_dep()
                 case "0": 
                     print("\nExiting application. Goodbye!")
                     break
