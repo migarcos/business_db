@@ -47,7 +47,7 @@ def init_db():
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS employee (
-                employee_id INT PRIMARY KEY,
+                employee_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 fname TEXT NOT NULL,
                 lname TEXT NOT NULL,
                 email TEXT NOT NULL,
@@ -84,7 +84,7 @@ def show_all_empl():
             cursor = conn.cursor()
             # cursor.execute("SELECT * FROM employee")
             cursor.execute("""SELECT
-                        e.fname, e.lname, e.email, e.hire_date, e.salary, d.department_code 
+                        e.employee_id, e.fname, e.lname, e.email, e.hire_date, e.salary, d.department_code 
                         FROM employee e
                         JOIN departments d ON e.department_id = d.department_id
                         ORDER BY d.department_code ASC
@@ -92,10 +92,12 @@ def show_all_empl():
 
             rows = cursor.fetchall()
             print("\n --- EMPLOYEES LIST --- ")
-            print(f"\n{'Name':<10} {'Last':<12} {'Email':<28} {'Hire Date':<12} {'Salary':>10} {'Dept':>6}")
+            print(f"\n{'ID':<5} {'Name':<10} {'Last':<12} {'Email':<20} {'Hire Date':<12} {'Salary':>10} {'Dept':>6}")
             print("-" * 82)
             for row in rows:
-                print(f'{row['fname']:<10} {row['lname']:<12} {row['email']:<28} {row['hire_date']:<12} {row['salary']:>10.2f} {row['department_code']:>6}')
+                # emp_id = row['employee_id'] if row['employee_id'] is not None else 0
+                # print(f"{emp_id:<5} {row['fname']:<10} {row['lname']:<12} {row['email']:<20} {row['hire_date']:<12} {row['salary']:>10.2f} {row['department_code']:>6}")
+                print(f"{row['employee_id']:<5} {row['fname']:<10} {row['lname']:<12} {row['email']:<20} {row['hire_date']:<12} {row['salary']:>10.2f} {row['department_code']:>6}")
 
 #  - - - -  CRUD  - - - -  
 def create_emp(data):
@@ -178,6 +180,8 @@ def emp_creation():
 
     create_emp(employee_data)
 
+def emp_del():
+    print("starting")
 
 def main():
     init_db()
@@ -189,8 +193,8 @@ def main():
             print("2. List All Employee")
             print("3. Find Employee by Name")
             print("4. Update Employee")
-            print("1. Delete Employee")
-            print("1. Add Employee")
+            print("5. Delete Employee")
+            print("6. Exit ")
             usr_opt = input("\nSelect an option: ").strip()
 
             match usr_opt:
@@ -198,6 +202,8 @@ def main():
                     emp_creation()
                 case "2":
                     show_all_empl()
+                case "5":
+                    emp_del()
                 case "6": 
                     print("\nExiting application. Goodbye!")
                     break
