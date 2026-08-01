@@ -25,10 +25,10 @@ def init_db():
             ("Te Ara", "Erueti", "terueti@buss.com", "2025-01-01", 3900.00, "ACC"),
             ("Garret", "Peterson", "gpeterson@buss.com", "2023-06-15", 2000.00, "SAL"),
             ("Percy", "Brandot", "pbrandot@buss.com", "2024-07-01", 2000.00, "SAL"),
-            ("Salma", "Hayek", "shayek@buss.com", "2023-01-15", 3000.00, "SAL"),
+            ("Salma", "Hayek", "shayek@buss.com", "2023-08-15", 3000.00, "SAL"),
             ("Angeline", "Jolie", "ajolie@buss.com", "2024-02-01", 2000.00, "SAL"),
             ("Sandra", "Bullock", "sbullock@buss.com", "2025-09-15", 2000.00, "SAL"),
-            ("Kevin", "Space", "kspace@buss.com", "2023-11-15", 3500.00, "OPS"),
+            ("Darth", "Vader", "dvader@buss.com", "2026-06-15", 1500.00, "OPS"),
             ("Darth", "Vader", "dvader@buss.com", "2026-01-02", 3500.00, "OPS"),
         ]
 
@@ -152,6 +152,28 @@ def salary_by_dep():
 
         print("-" * 20)
         print(f'{'TOTAL':<6} {total:>12.2f}')
+
+def old_new_emp():
+    with get_conn() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 'Oldest' AS type, e.employee_id, e.fname, e.lname, e.hire_date
+            FROM employee e
+            WHERE e.hire_date = (SELECT MIN(hire_date) FROM employee)
+            UNION
+            SELECT 'Newest' AS type, e.employee_id, e.fname, e.lname, e.hire_date
+            FROM employee e
+            WHERE e.hire_date = (SELECT MAX(hire_date) FROM employee)
+        """)
+
+        rows = cursor.fetchall()
+        print("\n   ====   Oldest and Newest Employees   =====   ")
+        print(f"{'Type':<8} {'ID':<5}  {'Name':<10} {'Last':<10} {'Hire Date':<12}")
+        print("-"*50)
+
+        for row in rows:
+            print(f"{row['type']:<8} {row['employee_id']:<5} {row['fname']:<10} {row['lname']:<10} {row['hire_date']:<12}")
+
 
 #  - - - -  CRUD  - - - -  
 def create_emp(data):
@@ -309,11 +331,12 @@ def main():
             print("\n ===   MAIN MENU   === ")
             print("1. Add Employee")
             print("2. List All Employee")
-            print("3. Find Employee by Name")
+            # print("3. Find Employee by Name")
             print("4. Update Employee")
             print("5. Delete Employee")
             print("6. Employees by department")
             print("7. Salary by department")
+            print("8. Oldest and Newest employees")
             print("0. Exit ")
             usr_opt = input("\nSelect an option: ").strip()
 
@@ -330,6 +353,8 @@ def main():
                     emp_by_dep()
                 case "7":
                     salary_by_dep()
+                case "8":
+                    old_new_emp()
                 case "0": 
                     print("\nExiting application. Goodbye!")
                     break
