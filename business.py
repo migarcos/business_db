@@ -1,16 +1,18 @@
 import sqlite3
 from datetime import date
 
+# create the connection with the DB
 def get_conn():
     conn = sqlite3.connect("business.db")
     conn.row_factory = sqlite3.Row  # dictionary.like row formatting 
     return conn
-
+# start the DB and populate with initial data
 def init_db():
     with get_conn() as conn:
         cursor = conn.cursor()
         cursor.execute("PRAGMA foreign_keys = ON")
 
+        #  basic_departmetns and init_empl populate tables to start 
         basic_departments = [
             ("Human Resources", "HR"),
             ("Accounting", "ACC"),
@@ -31,7 +33,7 @@ def init_db():
             ("Darth", "Vader", "dvader@buss.com", "2026-06-15", 1500.00, "OPS"),
             ("Darth", "Vader", "dvader@buss.com", "2026-01-02", 3500.00, "OPS"),
         ]
-
+        # create table deparments
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS departments (
                 department_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,12 +41,12 @@ def init_db():
                 department_code TEXT UNIQUE NOT NULL
             )    
         """)
-
+        # Populate table departments
         cursor.executemany("""
             INSERT OR IGNORE INTO departments (department_name, department_code)
             VALUES (?, ?)
         """, basic_departments)
-
+        # create table employee
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS employee (
                 employee_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +60,7 @@ def init_db():
                 FOREIGN KEY (department_id) REFERENCES departments(department_id)
             )
         """)
-
+        # populate employee table con initial data
         cursor.execute("SELECT COUNT(*) FROM employee")
         if cursor.fetchone()[0] == 0:
             cursor.executemany("""
@@ -67,13 +69,15 @@ def init_db():
             """, init_empl,)
 
         conn.commit()
-
+# show all the available departments
 def show_departments():
     with get_conn() as conn:
         cursor = conn.cursor()
+        # execute tje query to retrieve data
         cursor.execute("SELECT * FROM departments")
         # return cursor.fetchall()
         rows = cursor.fetchall()
+        # display the data
         print("\n --- DEPARTMENTS LIST --- ")
         for row in rows:
             print(f'ID: {row['department_id']} | Código: {row['department_code']} | Nombre: {row['department_name']}')
@@ -83,14 +87,17 @@ def show_all_empl():
     with get_conn() as conn:
             cursor = conn.cursor()
             # cursor.execute("SELECT * FROM employee")
+
+            # The query use the data from employee but use the FK  d.department_id to show in order department_code
             cursor.execute("""SELECT
                         e.employee_id, e.fname, e.lname, e.email, e.hire_date, e.salary, d.department_code 
                         FROM employee e
                         JOIN departments d ON e.department_id = d.department_id
                         ORDER BY d.department_code ASC
             """)
-
-            rows = cursor.fetchall()
+            # rows is a list of tuples to each employee instance
+            rows = cursor.fetchall()    
+            # display the employees 
             print("\n --- EMPLOYEES LIST --- ")
             print(f"\n{'ID':<5} {'Name':<10} {'Last':<12} {'Email':<20} {'Hire Date':<12} {'Salary':>10} {'Dept':>6}")
             print("-" * 82)
@@ -99,9 +106,11 @@ def show_all_empl():
                 # print(f"{emp_id:<5} {row['fname']:<10} {row['lname']:<12} {row['email']:<20} {row['hire_date']:<12} {row['salary']:>10.2f} {row['department_code']:>6}")
                 print(f"{row['employee_id']:<5} {row['fname']:<10} {row['lname']:<12} {row['email']:<20} {row['hire_date']:<12} {row['salary']:>10.2f} {row['department_code']:>6}")
 
+# This function call a query directly from the mani menu
 def emp_by_dep():
     with get_conn() as conn:
         cursor = conn.cursor()
+        # The query count employees using department_id to GROUP  showint the department_code
         cursor.execute("""
             SELECT d.department_code, COUNT(e.employee_id) AS employee_count
             FROM employee e
@@ -129,6 +138,8 @@ def emp_by_dep():
 def salary_by_dep():
     with get_conn() as conn:
         cursor = conn.cursor()
+        # This query help to calculate the total salaries by department
+        # A JOIN is used to ensure use the FK
         cursor.execute("""
             SELECT d.department_code, SUM(e.salary) AS subt_salary
             FROM employee e
@@ -179,6 +190,7 @@ def old_new_emp():
 def create_emp(data):
     with get_conn() as conn:
         cursor = conn.cursor()
+        # tehe query create a new employee using data sended from emp_creation() funtion
         cursor.execute("""
             INSERT INTO employee (fname, lname, email, hire_date, salary, department_id)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -189,6 +201,7 @@ def create_emp(data):
         conn.commit()
         print("\n A new employee was created successfully!")
 
+# function called by emp_upd that send the employee_id to be updated
 def upd_emp(emp_id):
     with get_conn() as conn:
         cursor = conn.cursor()
@@ -196,6 +209,8 @@ def upd_emp(emp_id):
         # FROM employee e
         # JOIN department d ON e.department_id = d.department_id
         # WHERE e.employee_id = ?
+
+        # the query retrieve data only to employee with id sended
         cursor.execute("""
             SELECT * FROM employee WHERE employee_id = ?
         """, 
@@ -203,18 +218,18 @@ def upd_emp(emp_id):
         )
 
         employee = cursor.fetchone()
-
+        # verify if the id has data to continue
         if not employee:
             return False
 
         print(f"\nEditing Employe {id} (Press [ENTER] to keep current value) ")
-
+        # update each variable  with new dat or with actual data
         new_fname = ( input(f"First Name [{employee['fname']}]: ")).strip() or employee['fname']
         new_lname = ( input(f"Last Name [{employee['lname']}]: ")).strip() or employee['lname']
         new_email = ( input(f"Email [{employee['email']}]: ")).strip() or employee['email']
         new_salary = ( input(f"salary [{employee['salary']}]: ")).strip() or employee['salary']
         new_department = ( input(f"Department [{employee['department_id']}]: ")).strip() or employee['department_id']
-
+        # UPDATE the employee instances
         cursor.execute("""
             UPDATE employee 
             SET fname = ?, lname = ?, email = ?, salary = ?, department_id = ?
@@ -235,6 +250,8 @@ def del_emp(id):
         return cursor.rowcount > 0
     
 # --- CLI handlers ---
+
+# this function receive data from the user and send it to create_emp function
 def emp_creation():
     
     fields = [
@@ -249,6 +266,7 @@ def emp_creation():
     print("\n---- Create a new employee ----")
     print("* This fields are required:")
 
+    # loop to populate the first 4 fields
     for field_key, field_label in fields:
         while True:
             value = input(f'{field_label}: ').strip()
@@ -269,11 +287,12 @@ def emp_creation():
 
             employee_data[field_key] = value
             break
-
+    # define the hire_Date to the actual date
     hire_date_str = date.today().isoformat()
     employee_data["hire_date"] = hire_date_str
     print('Hire Date use, as default value, the actual date.')
 
+    # retrive data from deparmetns table to ensure department accurancy
     with get_conn() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT department_id, department_code, department_name FROM departments")
@@ -298,9 +317,10 @@ def emp_creation():
                 break
             else:
                 print('ERROR! Invalid department code. Choose from the list above')
-
+    # send the data retrieved 
     create_emp(employee_data)
 
+# this function ensure the user digit an valid employee_id before call upd_emp()
 def emp_upd():
     print("\n ----  Update Employee ----- ")
     try:
@@ -326,6 +346,8 @@ def emp_del():
 def main():
     init_db()
     # show_departments()     show_init_empl()
+
+    # Display the main menu
     try: 
         while True:
             print("\n ===   MAIN MENU   === ")

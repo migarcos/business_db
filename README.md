@@ -5,7 +5,23 @@ Repetition is the mother of skill. This time, I'll use Python and SQLite3 to sim
 I'll start by managing employees and departments. Later, I will add projects and job titles or positions (with their respective salary ranges).
 
 
-[Software Demo Video]()
+[Software Demo Video](https://youtu.be/4FnHwycCOEk?si=pizuA41kvlGuG7OG)
+
+# Relational Database
+
+Employee  N  <-------- 1  departements
+
+Employee Table
+employee_id PK, fname, lname, email, hire_date, status, salary, department_id FK
+
+Department Table
+deparment_id PK, department_name, department_code
+
+## Future tables 
+Level (to calculate position salary)
+Project 
+Employee_Story (to track positions and salaries)
+
 
 # Development Environment
 
